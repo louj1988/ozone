@@ -94,8 +94,7 @@ import org.apache.hadoop.hdds.server.OzoneAdmins;
 import org.apache.hadoop.hdds.server.ServerUtils;
 import org.apache.hadoop.hdds.server.events.FixedThreadPoolWithAffinityExecutor;
 import org.apache.hadoop.hdds.server.http.RatisDropwizardExports;
-import org.apache.hadoop.hdds.utils.HAUtils;
-import org.apache.hadoop.hdds.utils.HddsServerUtil;
+import org.apache.hadoop.hdds.utils.*;
 import org.apache.hadoop.hdds.scm.ScmConfig;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.hadoop.hdds.scm.block.BlockManager;
@@ -145,9 +144,6 @@ import org.apache.hadoop.hdds.server.ServiceRuntimeInfoImpl;
 import org.apache.hadoop.hdds.server.events.EventPublisher;
 import org.apache.hadoop.hdds.server.events.EventQueue;
 import org.apache.hadoop.hdds.upgrade.HDDSLayoutVersionManager;
-import org.apache.hadoop.hdds.utils.HddsVersionInfo;
-import org.apache.hadoop.hdds.utils.IOUtils;
-import org.apache.hadoop.hdds.utils.LegacyHadoopConfigurationSource;
 import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.metrics2.MetricsSystem;
 import org.apache.hadoop.metrics2.util.MBeans;
@@ -236,6 +232,7 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
   private static SCMMetrics metrics;
   private static SCMPerformanceMetrics perfMetrics;
   private SCMHAMetrics scmHAMetrics;
+  private final NettyMetrics nettyMetrics;
 
   /*
    * RPC Endpoints exposed by SCM.
@@ -456,6 +453,7 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
 
     registerMXBean();
     registerMetricsSource(this);
+    this.nettyMetrics = NettyMetrics.create();
   }
 
   private void initializeEventHandlers() {
@@ -1708,6 +1706,10 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
 
     if (metrics != null) {
       metrics.unRegister();
+    }
+
+    if (this.nettyMetrics != null) {
+      this.nettyMetrics.unregister();
     }
 
     if (perfMetrics != null) {
